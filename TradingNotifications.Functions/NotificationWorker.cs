@@ -4,19 +4,23 @@ using Microsoft.Extensions.Logging;
 
 namespace TradingNotifications.Functions;
 
-public class Function1
+public class NotificationWorker
 {
     private readonly ILogger _logger;
 
-    public Function1(ILoggerFactory loggerFactory)
+    public NotificationWorker(ILoggerFactory loggerFactory)
     {
-        _logger = loggerFactory.CreateLogger<Function1>();
+        _logger = loggerFactory.CreateLogger<NotificationWorker>();
     }
 
-    [Function("Function1")]
+    /// <summary>
+    /// Run the worker each 15 min
+    /// </summary>
+    /// <param name="myTimer"></param>
+    [Function("NotificationWorker")]
     public void Run([TimerTrigger("0 */15 * * * *")] TimerInfo myTimer)
     {
-        _logger.LogInformation("C# Timer trigger function executed at: {executionTime}", DateTime.Now);
+        _logger.LogInformation("C# Timer trigger function executed at: {executionTime}", DateTime.UtcNow);
         
         if (myTimer.ScheduleStatus is not null)
         {
