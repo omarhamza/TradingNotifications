@@ -1,0 +1,75 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Omar\\Desktop\\TradingNotifications\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{E1AF141F-1839-4DFB-82EC-E6124FC24206}|TradingNotifications.Application\\TradingNotifications.Application.csproj|c:\\users\\omar\\desktop\\tradingnotifications\\tradingnotifications.application\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E1AF141F-1839-4DFB-82EC-E6124FC24206}|TradingNotifications.Application\\TradingNotifications.Application.csproj|solutionrelative:tradingnotifications.application\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{73CB2CBC-4EF6-414B-A515-E491838450A9}|TradingNotifications.Infrastructure\\TradingNotifications.Infrastructure.csproj|c:\\users\\omar\\desktop\\tradingnotifications\\tradingnotifications.infrastructure\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{73CB2CBC-4EF6-414B-A515-E491838450A9}|TradingNotifications.Infrastructure\\TradingNotifications.Infrastructure.csproj|solutionrelative:tradingnotifications.infrastructure\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B49ABEDD-CE2F-478B-8BEB-18D97EC7B116}|TradingNotifications.Domain\\TradingNotifications.Domain.csproj|c:\\users\\omar\\desktop\\tradingnotifications\\tradingnotifications.domain\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B49ABEDD-CE2F-478B-8BEB-18D97EC7B116}|TradingNotifications.Domain\\TradingNotifications.Domain.csproj|solutionrelative:tradingnotifications.domain\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\Omar\\Desktop\\TradingNotifications\\TradingNotifications.Application\\Program.cs",
+              "RelativeDocumentMoniker": "TradingNotifications.Application\\Program.cs",
+              "ToolTip": "C:\\Users\\Omar\\Desktop\\TradingNotifications\\TradingNotifications.Application\\Program.cs",
+              "RelativeToolTip": "TradingNotifications.Application\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-03T14:57:09.64Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\Omar\\Desktop\\TradingNotifications\\TradingNotifications.Infrastructure\\Program.cs",
+              "RelativeDocumentMoniker": "TradingNotifications.Infrastructure\\Program.cs",
+              "ToolTip": "C:\\Users\\Omar\\Desktop\\TradingNotifications\\TradingNotifications.Infrastructure\\Program.cs",
+              "RelativeToolTip": "TradingNotifications.Infrastructure\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-03T14:54:45.973Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\Omar\\Desktop\\TradingNotifications\\TradingNotifications.Domain\\Program.cs",
+              "RelativeDocumentMoniker": "TradingNotifications.Domain\\Program.cs",
+              "ToolTip": "C:\\Users\\Omar\\Desktop\\TradingNotifications\\TradingNotifications.Domain\\Program.cs",
+              "RelativeToolTip": "TradingNotifications.Domain\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-03T14:54:17.145Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
