@@ -16,7 +16,7 @@ public class NotificationWorker
 
     public NotificationWorker(ILoggerFactory loggerFactory,
         IConfiguration configuration, 
-        INotificationService notificationService, 
+        INotificationService notificationService,
         ICryptoAnalysisService notificationProcessor)
     {
         _logger = loggerFactory.CreateLogger<NotificationWorker>();
@@ -32,7 +32,8 @@ public class NotificationWorker
     [Function("NotificationWorker")]
     public void Run([TimerTrigger("0 */15 * * * *")] TimerInfo myTimer)
     {
-        _logger.LogInformation("C# Timer trigger function executed at: {executionTime}", DateTime.UtcNow);
+        _logger.LogInformation("C# Timer trigger function executed at: {executionTime}",
+            DateTime.UtcNow);
 
         var settings = _configuration.GetSection("CryptoMonitorSettings").Get<CryptoMonitorSettings>() ?? new CryptoMonitorSettings();
 

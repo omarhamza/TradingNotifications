@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+#. "$(dirname "$0")/h"
+echo "Dotnet formating....."
+dotnet format whitespace
+echo "End formating"
