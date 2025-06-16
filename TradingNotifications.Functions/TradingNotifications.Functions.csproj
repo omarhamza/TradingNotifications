@@ -15,4 +15,8 @@
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.3.1" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.2" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TradingNotifications.Application\TradingNotifications.Application.csproj" />
+    <ProjectReference Include="..\TradingNotifications.Infrastructure\TradingNotifications.Infrastructure.csproj" />
+  </ItemGroup>
 </Project>
