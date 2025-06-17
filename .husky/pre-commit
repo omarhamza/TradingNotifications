@@ -2,4 +2,6 @@
 #. "$(dirname "$0")/h"
 echo "Dotnet formating....."
 dotnet format whitespace
+dotnet format style
+dotnet format --severity warn
 echo "End formating"
