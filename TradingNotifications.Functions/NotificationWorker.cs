@@ -10,14 +10,17 @@ public class NotificationWorker
 {
     private readonly ILogger _logger;
     private readonly HttpClient _httpClient = new HttpClient();
+
     private readonly IConfiguration _configuration;
     private readonly INotificationService _notificationService;
     private readonly ICryptoAnalysisService _notificationProcessor;
 
-    public NotificationWorker(ILoggerFactory loggerFactory,
-        IConfiguration configuration, 
+    public NotificationWorker(
+        ILoggerFactory loggerFactory, 
+        IConfiguration configuration,
         INotificationService notificationService,
-        ICryptoAnalysisService notificationProcessor)
+        ICryptoAnalysisService notificationProcessor
+        )
     {
         _logger = loggerFactory.CreateLogger<NotificationWorker>();
         _configuration = configuration;
