@@ -9,14 +9,12 @@ namespace TradingNotifications.Functions;
 public class NotificationWorker
 {
     private readonly ILogger _logger;
-    private readonly HttpClient _httpClient = new HttpClient();
-
     private readonly IConfiguration _configuration;
     private readonly INotificationService _notificationService;
     private readonly ICryptoAnalysisService _notificationProcessor;
 
     public NotificationWorker(
-        ILoggerFactory loggerFactory, 
+        ILoggerFactory loggerFactory,
         IConfiguration configuration,
         INotificationService notificationService,
         ICryptoAnalysisService notificationProcessor
@@ -35,15 +33,11 @@ public class NotificationWorker
     [Function("NotificationWorker")]
     public void Run([TimerTrigger("0 */10 * * * *")] TimerInfo myTimer)
     {
-        _logger.LogInformation("C# Timer trigger function executed at: {executionTime}",
-            DateTime.UtcNow);
+        _logger.LogInformation("C# Timer trigger function executed at: {executionTime}", DateTime.UtcNow);
 
         var settings = _configuration.GetSection("CryptoMonitorSettings").Get<CryptoMonitorSettings>() ?? new CryptoMonitorSettings();
 
-        _notificationProcessor
-            .ProcessNotificationsAsync(settings.CryptoList, settings)
-            .GetAwaiter()
-            .GetResult();
+        await _notificationProcessor.ProcessNotificationsAsync(settings.CryptoList, settings);
 
         if (myTimer.ScheduleStatus is not null)
         {
