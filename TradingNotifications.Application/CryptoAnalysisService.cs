@@ -7,10 +7,12 @@ namespace TradingNotifications.Application;
 public class CryptoAnalysisService : ICryptoAnalysisService
 {
     private readonly INotificationService _notificationService;
+    private readonly HttpClient _httpClient;
 
-    public CryptoAnalysisService(INotificationService notificationService)
+    public CryptoAnalysisService(INotificationService notificationService, HttpClient httpClient)
     {
         _notificationService = notificationService;
+        _httpClient = httpClient;
     }
 
     public async Task ProcessNotificationsAsync(IEnumerable<string> cryptoList, CryptoMonitorSettings settings)
@@ -53,10 +55,9 @@ public class CryptoAnalysisService : ICryptoAnalysisService
 
     private async Task<List<Candle>> GetHistoricalPricesAsync(string symbol, string interval = "1h", int limit = 100)
     {
-        using var httpClient = new HttpClient();
         var url = $"https://api.binance.com/api/v3/klines?symbol={symbol}&interval={interval}&limit={limit}";
 
-        var response = await httpClient.GetStringAsync(url);
+        var response = await _httpClient.GetStringAsync(url);
         var raw = JsonSerializer.Deserialize<List<List<JsonElement>>>(response);
 
         var candles = new List<Candle>();
