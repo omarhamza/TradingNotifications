@@ -33,7 +33,7 @@ public class NotificationWorker
     /// </summary>
     /// <param name="myTimer"></param>
     [Function("NotificationWorker")]
-    public void Run([TimerTrigger("0 */15 * * * *")] TimerInfo myTimer)
+    public void Run([TimerTrigger("0 */10 * * * *")] TimerInfo myTimer)
     {
         _logger.LogInformation("C# Timer trigger function executed at: {executionTime}",
             DateTime.UtcNow);
