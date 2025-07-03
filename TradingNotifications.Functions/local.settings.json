@@ -1,0 +1,30 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+
+    "CryptoMonitorSettings:CryptoList:0": "EURUSDT",
+    "CryptoMonitorSettings:CryptoList:1": "GBPUSDT",
+    "CryptoMonitorSettings:CryptoList:2": "BTCUSDT",
+    "CryptoMonitorSettings:CryptoList:3": "ETHUSDT",
+    "CryptoMonitorSettings:CryptoList:4": "LTCUSDT",
+    "CryptoMonitorSettings:CryptoList:5": "BNBUSDT",
+    "CryptoMonitorSettings:CryptoList:6": "ETCUSDT",
+    "CryptoMonitorSettings:CryptoList:7": "SOLUSDT",
+    "CryptoMonitorSettings:CryptoList:8": "XRPUSDT",
+    "CryptoMonitorSettings:CryptoList:9": "REPUSDT",
+    "CryptoMonitorSettings:CryptoList:10": "BCHUSDT",
+    "CryptoMonitorSettings:CryptoList:11": "TRBUSDT",
+    "CryptoMonitorSettings:CryptoList:12": "DOGEUSDT",
+    "CryptoMonitorSettings:CryptoList:13": "XLMUSDT",
+    "CryptoMonitorSettings:CryptoList:14": "SHIBUSDT",
+    "CryptoMonitorSettings:CryptoList:15": "BONKUSDT",
+    "CryptoMonitorSettings:SmaPeriod": "14",
+    "CryptoMonitorSettings:RsiPeriod": "14",
+    "CryptoMonitorSettings:RsiBuyThreshold": "30",
+
+    "TelegramBotToken": "7546544248:AAHbFsJ6KcBRvZsf384BwZqj6-gJb_MJ3Hk",
+    "TelegramChatId": "7664939619"
+  }
+}
