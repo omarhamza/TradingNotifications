@@ -18,8 +18,8 @@ var chatId = Environment.GetEnvironmentVariable("TelegramChatId");
 
 builder.Services.AddSingleton<INotificationService>(serviceProvider =>
 {
-    var httpClient = serviceProvider.GetRequiredService<HttpClient>();
-    return new TelegramNotificationService(botToken!, chatId!, httpClient);
+    var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+    return new TelegramNotificationService(botToken!, chatId!, httpClientFactory);
 });
 builder.Services.AddSingleton<ICryptoAnalysisService, CryptoAnalysisService>();
 

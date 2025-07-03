@@ -8,19 +8,19 @@ public class TelegramNotificationService : INotificationService
 {
     private readonly string _botToken;
     private readonly string _chatId;
-    private readonly HttpClient _httpClient;
-    public TelegramNotificationService(string botToken, string chatId, HttpClient httpClient)
+    private readonly IHttpClientFactory _httpClientFactory;
+    public TelegramNotificationService(string botToken, string chatId, IHttpClientFactory httpClient)
     {
         _botToken = botToken;
         _chatId = chatId;
-        _httpClient = httpClient;
+        _httpClientFactory = httpClient;
     }
 
     public async Task SendNotificationAsync(Notification notification)
     {
+        var httpClient = _httpClientFactory.CreateClient();
         var url = $"https://api.telegram.org/bot{_botToken}/sendMessage?chat_id={_chatId}&text={Uri.EscapeDataString(notification.Message)}";
 
-        var response = await _httpClient.GetAsync(url);
-        response.EnsureSuccessStatusCode();
+        var response = await httpClient.GetStringAsync(url);
     }
 }
