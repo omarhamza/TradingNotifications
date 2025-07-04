@@ -159,4 +159,21 @@ public static class Algorithms101
 
         return trList.Skip(trList.Count - period).Average(); // Simplified: returning average TR as proxy for ADX
     }
+
+
+    // 🚨 Détection de franchissement RSI de 30 à 40 en un intervalle (ex. 15min)
+    public static bool IsRSISurge(List<decimal> closes, int period = 14)
+    {
+        if (closes.Count < period + 2) return false;
+
+        // Calcule RSI à t-1 et à t
+        var previousCloses = closes.Take(closes.Count - 1).ToList();
+        var currentCloses = closes;
+
+        var rsiBefore = CalculateRSI(previousCloses, period);
+        var rsiNow = CalculateRSI(currentCloses, period);
+
+        return (rsiNow - rsiBefore >= 10) ||
+               (rsiBefore <= 30 && rsiNow >= 40);
+    }
 }

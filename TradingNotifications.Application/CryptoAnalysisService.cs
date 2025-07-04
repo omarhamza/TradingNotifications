@@ -83,6 +83,12 @@ public class CryptoAnalysisService : ICryptoAnalysisService
         int period = 14;
         decimal currentPrice = closingPrices.Last();
 
+        // 0. 📈 Is RSI Surge
+        if (Algorithms101.IsRSISurge(closingPrices, period))
+        {
+            return true;
+        }
+
         // 1. 🧾 SMA
         var sma = Algorithms101.SimpleMovingAverage(closingPrices, period);
 
