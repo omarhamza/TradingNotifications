@@ -1,72 +1,9 @@
-﻿namespace TradingNotifications.Application;
+﻿using TradingNotifications.Domain.Services;
+
+namespace TradingNotifications.Application;
 
 public static class Algorithms101
 {
-    // 🔍 Recherche linéaire
-    public static int LinearSearch(int[] array, int target)
-    {
-        for (int i = 0; i < array.Length; i++)
-        {
-            if (array[i] == target)
-                return i;
-        }
-        return -1;
-    }
-
-    // 🔍 Recherche binaire (nécessite tableau trié)
-    public static int BinarySearch(int[] sortedArray, int target)
-    {
-        int left = 0, right = sortedArray.Length - 1;
-        while (left <= right)
-        {
-            int mid = (left + right) / 2;
-            if (sortedArray[mid] == target) return mid;
-            else if (sortedArray[mid] < target) left = mid + 1;
-            else right = mid - 1;
-        }
-        return -1;
-    }
-
-    // 🔄 Tri à bulles
-    public static void BubbleSort(int[] array)
-    {
-        int n = array.Length;
-        for (int i = 0; i < n - 1; i++)
-        {
-            for (int j = 0; j < n - i - 1; j++)
-            {
-                if (array[j] > array[j + 1])
-                {
-                    int temp = array[j];
-                    array[j] = array[j + 1];
-                    array[j + 1] = temp;
-                }
-            }
-        }
-    }
-
-    // 🧮 Factorielle récursive
-    public static int Factorial(int n)
-    {
-        if (n <= 1) return 1;
-        return n * Factorial(n - 1);
-    }
-
-    // 🧠 Vérifier un palindrome
-    public static bool IsPalindrome(string word)
-    {
-        var reversed = new string(word.Reverse().ToArray());
-        return word == reversed;
-    }
-
-    // 🧩 Vérifier si deux mots sont des anagrammes
-    public static bool AreAnagrams(string a, string b)
-    {
-        var aSorted = new string(a.OrderBy(c => c).ToArray());
-        var bSorted = new string(b.OrderBy(c => c).ToArray());
-        return aSorted == bSorted;
-    }
-
     // 🧾 Moyenne Mobile Simple (SMA)
     public static decimal SimpleMovingAverage(List<decimal> values, int period)
     {
@@ -112,68 +49,23 @@ public static class Algorithms101
         return (macd, signal, histogram);
     }
 
-    // 📊 Bollinger Bands
-    public static (decimal upper, decimal middle, decimal lower) CalculateBollingerBands(List<decimal> values, int period = 20)
-    {
-        if (values.Count < period) return (0, 0, 0);
-        var slice = values.Skip(values.Count - period).Take(period).ToList();
-        var mean = slice.Average();
-        var std = (decimal)Math.Sqrt(slice.Select(v => (double)(v - mean) * (double)(v - mean)).Average());
-        var upper = mean + 2 * std;
-        var lower = mean - 2 * std;
-        return (upper, mean, lower);
-    }
-
-    // 📈 RSI (Relative Strength Index)
-    public static decimal CalculateRSI(List<decimal> closes, int period = 14)
-    {
-        if (closes.Count < period + 1) return 0;
-
-        decimal gain = 0, loss = 0;
-        for (int i = closes.Count - period; i < closes.Count; i++)
-        {
-            var delta = closes[i] - closes[i - 1];
-            if (delta >= 0) gain += delta;
-            else loss -= delta;
-        }
-
-        if (loss == 0) return 100;
-        var rs = gain / loss;
-        return 100 - (100 / (1 + rs));
-    }
-
-    // 📊 ADX (Average Directional Index) - version simplifiée
-    public static decimal CalculateADX(List<decimal> high, List<decimal> low, List<decimal> close, int period = 14)
-    {
-        if (high.Count < period + 1 || low.Count < period + 1 || close.Count < period + 1)
-            return 0;
-
-        List<decimal> trList = new();
-        for (int i = 1; i < high.Count; i++)
-        {
-            var tr = Math.Max((double)(high[i] - low[i]), Math.Max(
-                Math.Abs((double)(high[i] - close[i - 1])),
-                Math.Abs((double)(low[i] - close[i - 1]))));
-            trList.Add((decimal)tr);
-        }
-
-        return trList.Skip(trList.Count - period).Average(); // Simplified: returning average TR as proxy for ADX
-    }
-
-
     // 🚨 Détection de franchissement RSI de 30 à 40 en un intervalle (ex. 15min)
-    public static bool IsRSISurge(List<decimal> closes, int period = 14)
+    public static bool IsRSISurge(List<decimal> closes, int period, out string message)
     {
-        if (closes.Count < period + 2) return false;
+        message = string.Empty;
 
-        // Calcule RSI à t-1 et à t
-        var previousCloses = closes.Take(closes.Count - 1).ToList();
-        var currentCloses = closes;
+        var rsiList = RsiCalculator.GetWilderRSIOverTime(closes, period);
 
-        var rsiBefore = CalculateRSI(previousCloses, period);
-        var rsiNow = CalculateRSI(currentCloses, period);
+        if (rsiList.Count < 2)
+            throw new InvalidOperationException("Pas assez de données pour calculer deux valeurs RSI.");
 
-        return (rsiNow - rsiBefore >= 10) ||
-               (rsiBefore <= 30 && rsiNow >= 40);
+        decimal latestRsi = rsiList.Last();
+        decimal previousRsi = rsiList[rsiList.Count - 2]; // RSI 15 min avant
+
+        decimal currentPrice = closes.Last();
+        message = $"\U0001F4C8 RSI Surge detected for current price {currentPrice:F2}. Consider buying.\n Rsi before: {previousRsi:F2} \n rsi now: {latestRsi:F2}";
+
+        return (latestRsi - previousRsi >= 10 && previousRsi <= 50) ||
+               (previousRsi <= 30 && latestRsi >= 40);
     }
 }

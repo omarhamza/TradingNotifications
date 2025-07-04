@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using System.Text.Json;
 using TradingNotifications.Domain.Entities;
+using TradingNotifications.Domain.Services;
 
 namespace TradingNotifications.Application;
 
@@ -36,15 +37,20 @@ public class CryptoAnalysisService : ICryptoAnalysisService
                     continue;
                 }
 
-                if (ShouldBuyCrypto(candles.Select(c => c.Close).ToList()))
+                var message = string.Empty;
+                if (ShouldIBuyCrypto(candles.Select(c => c.Close).ToList(), out message))
                 {
                     Console.WriteLine($"ACHETER {symbol} - Prix actuel: {candles.Last().Close:F2}");
-                    await _notificationService.SendNotificationAsync(new Notification($"ACHETER {symbol} - Prix actuel: {candles.Last().Close:F2}"));
+                    await _notificationService.SendNotificationAsync(new Notification($"ACHETER {symbol} - Prix actuel: {candles.Last().Close:F2} \n {message}"));
                 }
-                else
+
+                if (ShouldISellCrypto(candles.Select(c => c.Close).ToList(), out message))
                 {
-                    Console.WriteLine($"{symbol} surveillé - Prix actuel: {candles.Last().Close:F2}");
+                    Console.WriteLine($"VENDRE {symbol} - Prix actuel: {candles.Last().Close:F2}");
+                    await _notificationService.SendNotificationAsync(new Notification($"VENDRE {symbol} - Prix actuel: {candles.Last().Close:F2} \n {message}"));
                 }
+
+                Console.WriteLine($"{symbol} surveillé - Prix actuel: {candles.Last().Close:F2}");
             }
             catch (Exception ex)
             {
@@ -77,52 +83,66 @@ public class CryptoAnalysisService : ICryptoAnalysisService
         return candles;
     }
 
-    private bool ShouldBuyCrypto(List<decimal> closingPrices)
+    private bool ShouldIBuyCrypto(List<decimal> closingPrices, out string message)
     {
-        // Paramètres
+        message = string.Empty;
         int period = 14;
-        decimal currentPrice = closingPrices.Last();
 
-        // 0. 📈 Is RSI Surge
-        if (Algorithms101.IsRSISurge(closingPrices, period))
+        // 1. 📈 Détection d'une poussée du RSI (hausse brutale > 10 pts en 15 minutes)
+        bool isSurge = Algorithms101.IsRSISurge(closingPrices, period, out string surgeMsg);
+
+        if (isSurge)
         {
+            message = "🚀 RSI Surge détecté : " + surgeMsg;
             return true;
         }
 
-        // 1. 🧾 SMA
+        // 2. 🧾 Moyenne mobile simple (SMA)
         var sma = Algorithms101.SimpleMovingAverage(closingPrices, period);
 
-        // 2. 📈 RSI
-        var rsi = Algorithms101.CalculateRSI(closingPrices, period);
+        // 3. 📈 RSI (Wilder)
+        var rsi = RsiCalculator.GetWilderRSI(closingPrices, period);
 
-        // 3. 🔍 LinearSearch pour savoir si la valeur actuelle existe dans l'historique (exemple ludique)
-        int index = Algorithms101.LinearSearch(closingPrices.Select(c => (int)c).ToArray(), (int)currentPrice);
-        bool isCurrentInHistory = index != -1;
+        // 4. 🧠 Logique principale d'achat
+        decimal currentPrice = closingPrices.Last();
+        bool shouldBuy = rsi < 30 && currentPrice < sma;
 
-        // 4. 🔍 BinarySearch (sur données triées) - teste si SMA apparaît dans l'historique (arrondi)
-        var sorted = closingPrices.Select(c => (int)c).OrderBy(x => x).ToArray();
-        int smaSearch = Algorithms101.BinarySearch(sorted, (int)sma);
-
-        // 5. 🔄 BubbleSort (expérimental - juste pour appel de méthode)
-        var testArray = new int[] { 5, 3, 1, 4, 2 };
-        Algorithms101.BubbleSort(testArray);
-
-        // 6. 🧮 Factorielle (debug ou expérimental, ex: "combien de scénarios ?" → n!)
-        var factorial = Algorithms101.Factorial(5);
-
-        // 7. 🧠 IsPalindrome - ludique : on vérifie si la représentation textuelle du prix est symétrique
-        bool isPalindromePrice = Algorithms101.IsPalindrome(currentPrice.ToString("F2").Replace(".", ""));
-
-        // 8. 🧩 AreAnagrams - exemple symbolique : anagramme entre deux prix récents
-        bool areAnagrams = Algorithms101.AreAnagrams(
-            closingPrices[^1].ToString("F0"),
-            closingPrices[^2].ToString("F0"));
-
-        // 🧠 Logique de décision personnalisée
-        bool shouldBuy = rsi < 30 && currentPrice < sma && isCurrentInHistory && smaSearch != -1;
-
-        Console.WriteLine($"SMA: {sma}, RSI: {rsi}, Palindrome? {isPalindromePrice}, Anagramme? {areAnagrams}");
+        if (shouldBuy)
+        {
+            message = $"🔍 Conditions d'achat remplies : RSI={rsi:F2} < 30, Prix actuel={currentPrice:F2} < SMA={sma:F2}";
+        }
 
         return shouldBuy;
+    }
+
+    private bool ShouldISellCrypto(List<decimal> closingPrices, out string message)
+    {
+        // Paramètres
+        int period = 14;
+        message = string.Empty;
+
+        // 1. 📈 RSI
+        var rsi = RsiCalculator.GetWilderRSI(closingPrices, period);
+
+        // 2. 📊 Vérification de la tendance baissière
+        if (closingPrices.Count < 2)
+        {
+            message = "Pas assez de données pour évaluer la tendance.";
+            return false;
+        }
+
+        if (rsi > 80) // Surachat
+        {
+            // Dernier prix et prix précédent
+            {
+                var lastPrice = closingPrices.Last();
+                var previousPrice = closingPrices[closingPrices.Count - 2];
+
+                message = $"🔺RSI = {rsi:F2} > 80 \n 🔴Signal de VENTE immédiat";
+                return lastPrice < previousPrice; // Vente en cas de tendance baissière des prix.
+            }
+        }
+
+        return false;
     }
 }
