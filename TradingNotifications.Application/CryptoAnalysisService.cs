@@ -105,7 +105,17 @@ public class CryptoAnalysisService : ICryptoAnalysisService
 
         // 4. 🧠 Logique principale d'achat
         decimal currentPrice = closingPrices.Last();
-        bool shouldBuy = rsi < 30 && currentPrice < sma;
+
+        // 5. 📉 MACD (Moving Average Convergence Divergence)
+        // détecter les croisements après plusieurs bougies
+        var macd = MacdCalculator.GetIndicator(closingPrices);
+
+        bool shouldBuy =
+                macd.Histogram > 0 &&
+                macd.Histogram > 0 && // Croisement MACD au-dessus du Signal => signal d’achat
+                macd.Macd > macd.Signal &&
+                rsi > 35 && rsi < 75 &&
+                currentPrice < sma;
 
         if (shouldBuy)
         {

@@ -27,28 +27,6 @@ public static class Algorithms101
         return ema;
     }
 
-    // 📉 MACD (EMA 12 - EMA 26)
-    public static (decimal macd, decimal signal, decimal histogram) CalculateMACD(List<decimal> values)
-    {
-        if (values.Count < 26) return (0, 0, 0);
-
-        var ema12 = ExponentialMovingAverage(values, 12);
-        var ema26 = ExponentialMovingAverage(values, 26);
-        var macd = ema12 - ema26;
-
-        var macdSeries = new List<decimal>();
-        for (int i = 0; i < values.Count - 8; i++)
-        {
-            var subList = values.Skip(i).Take(9).ToList();
-            var shortEma = ExponentialMovingAverage(subList, 12);
-            var longEma = ExponentialMovingAverage(subList, 26);
-            macdSeries.Add(shortEma - longEma);
-        }
-        var signal = ExponentialMovingAverage(macdSeries, 9);
-        var histogram = macd - signal;
-        return (macd, signal, histogram);
-    }
-
     // 🚨 Détection de franchissement RSI de 30 à 40 en un intervalle (ex. 15min)
     public static bool IsRSISurge(List<decimal> closes, int period, out string message)
     {
