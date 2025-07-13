@@ -96,6 +96,17 @@ public class CryptoAnalysisService : ICryptoAnalysisService
             return true;
         }
 
+        // 2. Stochastic
+        var (percentK, percentD) = StochasticCalculator.GetIndicators(closingPrices);
+        bool buySignal = percentK > percentD && percentK < 20;
+        bool sellSignal = percentK < percentD && percentK > 80;
+
+        if (buySignal)
+        {
+            message = $"🚀 Signal d'achat Stochastic : %K={percentK:F2}, %D={percentD:F2}";
+            return true;
+        }
+
         // 2. 🧾 Moyenne mobile simple (SMA)
         var sma = SmaCalculator.GetIndicator(closingPrices, period);
 
@@ -119,7 +130,8 @@ public class CryptoAnalysisService : ICryptoAnalysisService
                 rsi > 20 && rsi < 80 &&
                 currentPrice > sma &&
                 currentPrice > previousPrice &&
-                smaSlope > 0; // SMA en pente positive
+                smaSlope > 0 && // SMA en pente positive
+                !sellSignal; // Pas de signal de vente
 
         if (shouldIBuy)
         {
@@ -145,14 +157,18 @@ public class CryptoAnalysisService : ICryptoAnalysisService
             return false;
         }
 
-        if (rsi > 80) // Surachat
+        // 2. Stochastic
+        var (percentK, percentD) = StochasticCalculator.GetIndicators(closingPrices);
+        bool sellSignal = percentK < percentD && percentK > 80;
+
+        if (rsi > 80 || sellSignal) // Surachat
         {
             // Dernier prix et prix précédent
             {
                 var lastPrice = closingPrices.Last();
                 var previousPrice = closingPrices[closingPrices.Count - 2];
 
-                message = $"🔺RSI = {rsi:F2} > 80 \n 🔴Signal de VENTE immédiat\n Current price: {lastPrice}\n Previous price: {previousPrice}";
+                message = $"🔺RSI = {rsi:F2} > 80 \n Stochastic = {percentK:F2} > 80 \n 🔴Signal de VENTE immédiat\n Current price: {lastPrice:F2}\n Previous price: {previousPrice:F2}";
                 return lastPrice < previousPrice; // Vente en cas de tendance baissière des prix.
             }
         }
