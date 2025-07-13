@@ -4,13 +4,6 @@ namespace TradingNotifications.Application;
 
 public static class Algorithms101
 {
-    // 🧾 Moyenne Mobile Simple (SMA)
-    public static decimal SimpleMovingAverage(List<decimal> values, int period)
-    {
-        if (values.Count < period) return 0;
-        return values.Skip(values.Count - period).Take(period).Average();
-    }
-
     // 📈 Moyenne Mobile Exponentielle (EMA)
     public static decimal ExponentialMovingAverage(List<decimal> values, int period)
     {

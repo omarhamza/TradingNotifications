@@ -43,8 +43,7 @@ public class CryptoAnalysisService : ICryptoAnalysisService
                     Console.WriteLine($"ACHETER {symbol} - Prix actuel: {candles.Last().Close:F2}");
                     await _notificationService.SendNotificationAsync(new Notification($"ACHETER {symbol} - Prix actuel: {candles.Last().Close:F2} \n {message}"));
                 }
-
-                if (ShouldISellCrypto(candles.Select(c => c.Close).ToList(), out message))
+                else if (ShouldISellCrypto(candles.Select(c => c.Close).ToList(), out message))
                 {
                     Console.WriteLine($"VENDRE {symbol} - Prix actuel: {candles.Last().Close:F2}");
                     await _notificationService.SendNotificationAsync(new Notification($"VENDRE {symbol} - Prix actuel: {candles.Last().Close:F2} \n {message}"));
@@ -98,31 +97,36 @@ public class CryptoAnalysisService : ICryptoAnalysisService
         }
 
         // 2. 🧾 Moyenne mobile simple (SMA)
-        var sma = Algorithms101.SimpleMovingAverage(closingPrices, period);
+        var sma = SmaCalculator.GetIndicator(closingPrices, period);
 
         // 3. 📈 RSI (Wilder)
         var rsi = RsiCalculator.GetWilderRSI(closingPrices, period);
 
-        // 4. 🧠 Logique principale d'achat
-        decimal currentPrice = closingPrices.Last();
+        var currentPrice = closingPrices.Last();
+        var previousPrice = closingPrices[closingPrices.Count - 2];
 
-        // 5. 📉 MACD (Moving Average Convergence Divergence)
+        // 4. 📉 MACD (Moving Average Convergence Divergence)
         // détecter les croisements après plusieurs bougies
         var macd = MacdCalculator.GetIndicator(closingPrices);
 
-        bool shouldBuy =
-                macd.Histogram > 0 &&
+        // 5. 📈 Slope de la Moyenne Mobile Simple (SMA)
+        var smaSlope = SmaCalculator.GetSmaSlope(closingPrices, period);
+
+        // 6. 📊 Conditions d'achat
+        bool shouldIBuy =
                 macd.Histogram > 0 && // Croisement MACD au-dessus du Signal => signal d’achat
                 macd.Macd > macd.Signal &&
-                rsi > 35 && rsi < 75 &&
-                currentPrice < sma;
+                rsi > 20 && rsi < 80 &&
+                currentPrice > sma &&
+                currentPrice > previousPrice &&
+                smaSlope > 0; // SMA en pente positive
 
-        if (shouldBuy)
+        if (shouldIBuy)
         {
-            message = $"🔍 Conditions d'achat remplies : RSI={rsi:F2} < 30, Prix actuel={currentPrice:F2} < SMA={sma:F2}";
+            message = $"🔍 Conditions d'achat remplies : RSI={rsi:F2}, Prix actuel={currentPrice:F2} > SMA={sma:F2}";
         }
 
-        return shouldBuy;
+        return shouldIBuy;
     }
 
     private bool ShouldISellCrypto(List<decimal> closingPrices, out string message)
@@ -148,7 +152,7 @@ public class CryptoAnalysisService : ICryptoAnalysisService
                 var lastPrice = closingPrices.Last();
                 var previousPrice = closingPrices[closingPrices.Count - 2];
 
-                message = $"🔺RSI = {rsi:F2} > 80 \n 🔴Signal de VENTE immédiat";
+                message = $"🔺RSI = {rsi:F2} > 80 \n 🔴Signal de VENTE immédiat\n Current price: {lastPrice}\n Previous price: {previousPrice}";
                 return lastPrice < previousPrice; // Vente en cas de tendance baissière des prix.
             }
         }
