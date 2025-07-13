@@ -127,7 +127,7 @@ public class CryptoAnalysisService : ICryptoAnalysisService
         bool shouldIBuy =
                 macd.Histogram > 0 && // Croisement MACD au-dessus du Signal => signal d’achat
                 macd.Macd > macd.Signal &&
-                rsi > 20 && rsi < 80 &&
+                rsi > 30 && rsi < 70 &&
                 currentPrice > sma &&
                 currentPrice > previousPrice &&
                 smaSlope > 0 && // SMA en pente positive
