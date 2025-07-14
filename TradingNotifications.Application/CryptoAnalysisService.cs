@@ -38,12 +38,20 @@ public class CryptoAnalysisService : ICryptoAnalysisService
                 }
 
                 var message = string.Empty;
-                if (ShouldIBuyCrypto(candles.Select(c => c.Close).ToList(), out message))
+                if (ShouldIBuyCrypto(
+                        candles.Select(c => c.Close).ToList(),
+                        candles.Select(c => c.High).ToList(),
+                        candles.Select(c => c.Low).ToList(),
+                        out message))
                 {
                     Console.WriteLine($"ACHETER {symbol} - Prix actuel: {candles.Last().Close:F2}");
                     await _notificationService.SendNotificationAsync(new Notification($"ACHETER {symbol} - Prix actuel: {candles.Last().Close:F2} \n {message}"));
                 }
-                else if (ShouldISellCrypto(candles.Select(c => c.Close).ToList(), out message))
+                else if (ShouldISellCrypto(
+                        candles.Select(c => c.Close).ToList(),
+                        candles.Select(c => c.High).ToList(),
+                        candles.Select(c => c.Low).ToList(),
+                        out message))
                 {
                     Console.WriteLine($"VENDRE {symbol} - Prix actuel: {candles.Last().Close:F2}");
                     await _notificationService.SendNotificationAsync(new Notification($"VENDRE {symbol} - Prix actuel: {candles.Last().Close:F2} \n {message}"));
@@ -82,13 +90,13 @@ public class CryptoAnalysisService : ICryptoAnalysisService
         return candles;
     }
 
-    private bool ShouldIBuyCrypto(List<decimal> closingPrices, out string message)
+    private bool ShouldIBuyCrypto(List<decimal> closes, List<decimal> highs, List<decimal> lows, out string message)
     {
         message = string.Empty;
         int period = 14;
 
-        // 1. 📈 Détection d'une poussée du RSI (hausse brutale > 10 pts en 15 minutes)
-        bool isSurge = Algorithms101.IsRSISurge(closingPrices, period, out string surgeMsg);
+        // 📈 Détection d'une poussée du RSI (hausse brutale > 10 pts en 15 minutes)
+        bool isSurge = Algorithms101.IsRSISurge(closes, period, out string surgeMsg);
 
         if (isSurge)
         {
@@ -96,8 +104,8 @@ public class CryptoAnalysisService : ICryptoAnalysisService
             return true;
         }
 
-        // 2. Stochastic
-        var (percentK, percentD) = StochasticCalculator.GetIndicators(closingPrices);
+        // Stochastic
+        var (percentK, percentD) = StochasticCalculator.GetIndicators(closes, highs, lows);
         bool buySignal = percentK > percentD && percentK < 20;
         bool sellSignal = percentK < percentD && percentK > 80;
 
@@ -107,23 +115,23 @@ public class CryptoAnalysisService : ICryptoAnalysisService
             return true;
         }
 
-        // 2. 🧾 Moyenne mobile simple (SMA)
-        var sma = SmaCalculator.GetIndicator(closingPrices, period);
+        // 🧾 Moyenne mobile simple (SMA)
+        var sma = SmaCalculator.GetIndicator(closes, period);
 
-        // 3. 📈 RSI (Wilder)
-        var rsi = RsiCalculator.GetWilderRSI(closingPrices, period);
+        // 📈 RSI (Wilder)
+        var rsi = RsiCalculator.GetWilderRSI(closes, period);
 
-        var currentPrice = closingPrices.Last();
-        var previousPrice = closingPrices[closingPrices.Count - 2];
+        var currentPrice = closes.Last();
+        var previousPrice = closes[closes.Count - 2];
 
-        // 4. 📉 MACD (Moving Average Convergence Divergence)
+        // 📉 MACD (Moving Average Convergence Divergence)
         // détecter les croisements après plusieurs bougies
-        var macd = MacdCalculator.GetIndicator(closingPrices);
+        var macd = MacdCalculator.GetIndicator(closes);
 
-        // 5. 📈 Slope de la Moyenne Mobile Simple (SMA)
-        var smaSlope = SmaCalculator.GetSmaSlope(closingPrices, period);
+        // 📈 Slope de la Moyenne Mobile Simple (SMA)
+        var smaSlope = SmaCalculator.GetSmaSlope(closes, period);
 
-        // 6. 📊 Conditions d'achat
+        // 📊 Conditions d'achat
         bool shouldIBuy =
                 macd.Histogram > 0 && // Croisement MACD au-dessus du Signal => signal d’achat
                 macd.Macd > macd.Signal &&
@@ -141,32 +149,32 @@ public class CryptoAnalysisService : ICryptoAnalysisService
         return shouldIBuy;
     }
 
-    private bool ShouldISellCrypto(List<decimal> closingPrices, out string message)
+    private bool ShouldISellCrypto(List<decimal> closes, List<decimal> highs, List<decimal> lows, out string message)
     {
         // Paramètres
         int period = 14;
         message = string.Empty;
 
-        // 1. 📈 RSI
-        var rsi = RsiCalculator.GetWilderRSI(closingPrices, period);
+        // 📈 RSI
+        var rsi = RsiCalculator.GetWilderRSI(closes, period);
 
-        // 2. 📊 Vérification de la tendance baissière
-        if (closingPrices.Count < 2)
+        // 📊 Vérification de la tendance baissière
+        if (closes.Count < 2)
         {
             message = "Pas assez de données pour évaluer la tendance.";
             return false;
         }
 
-        // 2. Stochastic
-        var (percentK, percentD) = StochasticCalculator.GetIndicators(closingPrices);
+        // Stochastic
+        var (percentK, percentD) = StochasticCalculator.GetIndicators(closes, highs, lows);
         bool sellSignal = percentK < percentD && percentK > 80;
 
         if (rsi > 80 || sellSignal) // Surachat
         {
             // Dernier prix et prix précédent
             {
-                var lastPrice = closingPrices.Last();
-                var previousPrice = closingPrices[closingPrices.Count - 2];
+                var lastPrice = closes.Last();
+                var previousPrice = closes[closes.Count - 2];
 
                 message = $"🔺RSI = {rsi:F2} > 80 \n Stochastic = {percentK:F2} > 80 \n 🔴Signal de VENTE immédiat\n Current price: {lastPrice:F2}\n Previous price: {previousPrice:F2}";
                 return lastPrice < previousPrice; // Vente en cas de tendance baissière des prix.
