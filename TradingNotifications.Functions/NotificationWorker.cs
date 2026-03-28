@@ -9,8 +9,6 @@ namespace TradingNotifications.Functions;
 public class NotificationWorker
 {
     private readonly ILogger _logger;
-    private readonly HttpClient _httpClient = new HttpClient();
-
     private readonly IConfiguration _configuration;
     private readonly INotificationService _notificationService;
     private readonly ICryptoAnalysisService _notificationProcessor;
@@ -33,17 +31,13 @@ public class NotificationWorker
     /// </summary>
     /// <param name="myTimer"></param>
     [Function("NotificationWorker")]
-    public void Run([TimerTrigger("0 */10 * * * *")] TimerInfo myTimer)
+    public async Task RunAsync([TimerTrigger("0 */10 * * * *")] TimerInfo myTimer)
     {
-        _logger.LogInformation("C# Timer trigger function executed at: {executionTime}",
-            DateTime.UtcNow);
+        _logger.LogInformation("C# Timer trigger function executed at: {executionTime}", DateTime.UtcNow);
 
         var settings = _configuration.GetSection("CryptoMonitorSettings").Get<CryptoMonitorSettings>() ?? new CryptoMonitorSettings();
 
-        _notificationProcessor
-            .ProcessNotificationsAsync(settings.CryptoList, settings)
-            .GetAwaiter()
-            .GetResult();
+        await _notificationProcessor.ProcessNotificationsAsync(settings.CryptoList, settings);
 
         if (myTimer.ScheduleStatus is not null)
         {
