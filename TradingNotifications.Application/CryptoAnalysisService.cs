@@ -18,7 +18,6 @@ public class CryptoAnalysisService : ICryptoAnalysisService
 
     public async Task ProcessNotificationsAsync(IEnumerable<string> cryptoList, CryptoMonitorSettings settings)
     {
-
         if (settings == null || settings.CryptoList == null || !settings.CryptoList.Any())
         {
             Console.WriteLine("Aucune crypto-monnaie à surveiller.");
@@ -29,35 +28,39 @@ public class CryptoAnalysisService : ICryptoAnalysisService
         {
             try
             {
-                var candles = await GetHistoricalPricesAsync(symbol);
-
-                if (candles == null || !candles.Any())
-                {
-                    Console.WriteLine($"Aucune donnée historique pour {symbol}.");
-                    continue;
-                }
-
                 var message = string.Empty;
-                if (ShouldIBuyCrypto(
-                        candles.Select(c => c.Close).ToList(),
-                        candles.Select(c => c.High).ToList(),
-                        candles.Select(c => c.Low).ToList(),
-                        out message))
+                decimal currentPrice = 0;
+                var oneHourCandles = Task.Run(async () =>
                 {
-                    Console.WriteLine($"ACHETER {symbol} - Prix actuel: {candles.Last().Close:F2}");
-                    await _notificationService.SendNotificationAsync(new Notification($"ACHETER {symbol} - Prix actuel: {candles.Last().Close:F2} \n {message}"));
-                }
-                else if (ShouldISellCrypto(
-                        candles.Select(c => c.Close).ToList(),
-                        candles.Select(c => c.High).ToList(),
-                        candles.Select(c => c.Low).ToList(),
-                        out message))
-                {
-                    Console.WriteLine($"VENDRE {symbol} - Prix actuel: {candles.Last().Close:F2}");
-                    await _notificationService.SendNotificationAsync(new Notification($"VENDRE {symbol} - Prix actuel: {candles.Last().Close:F2} \n {message}"));
-                }
+                    var candles = await GetHistoricalPricesAsync(symbol, "1h");
+                    var prediction = DecideTradeAction(candles.Take(candles.Count - 1).ToList());
+                    return prediction;
+                });
 
-                Console.WriteLine($"{symbol} surveillé - Prix actuel: {candles.Last().Close:F2}");
+                var fourHoursCandles = Task.Run(async () =>
+                {
+                    var candles = await GetHistoricalPricesAsync(symbol, "4h");
+                    currentPrice = candles.Last().Close;
+                    var prediction = DecideTradeAction(candles.Take(candles.Count - 1).ToList());
+                    return prediction;
+                });
+
+                // Run tasks in parallel  
+                await Task.WhenAll(oneHourCandles, fourHoursCandles);
+
+                var fifteenMinDecision = fourHoursCandles.Result;
+                var oneHourDecision = oneHourCandles.Result;
+
+                if (fifteenMinDecision.Decision == Decision.Buy && oneHourDecision.Decision == Decision.Buy)
+                {
+                    Console.WriteLine($"ACHETER {symbol} - Prix actuel: {currentPrice:F2}");
+                    await _notificationService.SendNotificationAsync(new Notification($"ACHETER {symbol} - Prix actuel: {currentPrice:F2} \n {message}"));
+                }
+                else if(fifteenMinDecision.Decision == Decision.Sell || oneHourDecision.Decision == Decision.Sell)
+                {
+                    Console.WriteLine($"VENDRE {symbol} - Prix actuel: ");
+                    await _notificationService.SendNotificationAsync(new Notification($"VENDRE {symbol} - Prix actuel: {currentPrice:F2} \n {message}"));
+                }
             }
             catch (Exception ex)
             {
@@ -66,7 +69,21 @@ public class CryptoAnalysisService : ICryptoAnalysisService
         }
     }
 
-    private async Task<List<Candle>> GetHistoricalPricesAsync(string symbol, string interval = "1h", int limit = 100)
+    private Result DecideTradeAction(List<Candle> candles)
+    {
+        if (candles == null || !candles.Any())
+        {
+            return new Result(Decision.None, "Aucune donnée de bougie disponible pour l'analyse.");
+        }
+
+        var closes = candles.Select(c => c.Close).ToList();
+        var highs = candles.Select(c => c.High).ToList();
+        var lows = candles.Select(c => c.Low).ToList();
+
+        return DecideTradeAction(closes, highs, lows);
+    }
+
+    private async Task<List<Candle>> GetHistoricalPricesAsync(string symbol, string interval, int limit = 100)
     {
         var url = $"https://api.binance.com/api/v3/klines?symbol={symbol}&interval={interval}&limit={limit}";
         var httpClient = _httpClientFactory.CreateClient();
@@ -90,30 +107,23 @@ public class CryptoAnalysisService : ICryptoAnalysisService
         return candles;
     }
 
-    private bool ShouldIBuyCrypto(List<decimal> closes, List<decimal> highs, List<decimal> lows, out string message)
+    private Result DecideTradeAction(List<decimal> closes, List<decimal> highs, List<decimal> lows)
     {
-        message = string.Empty;
         int period = 14;
 
         // 📈 Détection d'une poussée du RSI (hausse brutale > 10 pts en 15 minutes)
         bool isSurge = Algorithms101.IsRSISurge(closes, period, out string surgeMsg);
 
         if (isSurge)
-        {
-            message = "🚀 RSI Surge détecté : " + surgeMsg;
-            return true;
-        }
+            return new Result(Decision.Buy, "🚀 RSI Surge détecté : " + surgeMsg);
 
         // Stochastic
         var (percentK, percentD) = StochasticCalculator.GetIndicators(closes, highs, lows);
-        bool buySignal = percentK > percentD && percentK < 20;
-        bool sellSignal = percentK < percentD && percentK > 80;
+        bool buySignal = percentK > percentD && percentK < 40;
+        bool sellSignal = percentK < percentD && percentK > 65;
 
         if (buySignal)
-        {
-            message = $"🚀 Signal d'achat Stochastic : %K={percentK:F2}, %D={percentD:F2}";
-            return true;
-        }
+            return new Result(Decision.Buy, $"🚀 Signal d'achat Stochastic : %K={percentK:F2}, %D={percentD:F2}");
 
         // 🧾 Moyenne mobile simple (SMA)
         var sma = SmaCalculator.GetIndicator(closes, period);
@@ -138,49 +148,16 @@ public class CryptoAnalysisService : ICryptoAnalysisService
                 rsi > 30 && rsi < 70 &&
                 currentPrice > sma &&
                 currentPrice > previousPrice &&
-                smaSlope > 0 && // SMA en pente positive
-                !sellSignal; // Pas de signal de vente
+                smaSlope > 0; // SMA en pente positive
 
-        if (shouldIBuy)
-        {
-            message = $"🔍 Conditions d'achat remplies : RSI={rsi:F2}, Prix actuel={currentPrice:F2} > SMA={sma:F2}";
-        }
+        var shouldISell = (rsi > 80 || sellSignal) && // Surachat
+                currentPrice < previousPrice; // Vente en cas de tendance baissière des prix.
 
-        return shouldIBuy;
-    }
 
-    private bool ShouldISellCrypto(List<decimal> closes, List<decimal> highs, List<decimal> lows, out string message)
-    {
-        // Paramètres
-        int period = 14;
-        message = string.Empty;
-
-        // 📈 RSI
-        var rsi = RsiCalculator.GetWilderRSI(closes, period);
-
-        // 📊 Vérification de la tendance baissière
-        if (closes.Count < 2)
-        {
-            message = "Pas assez de données pour évaluer la tendance.";
-            return false;
-        }
-
-        // Stochastic
-        var (percentK, percentD) = StochasticCalculator.GetIndicators(closes, highs, lows);
-        bool sellSignal = percentK < percentD && percentK > 80;
-
-        if (rsi > 80 || sellSignal) // Surachat
-        {
-            // Dernier prix et prix précédent
-            {
-                var lastPrice = closes.Last();
-                var previousPrice = closes[closes.Count - 2];
-
-                message = $"🔺RSI = {rsi:F2} > 80 \n Stochastic = {percentK:F2} > 80 \n 🔴Signal de VENTE immédiat\n Current price: {lastPrice:F2}\n Previous price: {previousPrice:F2}";
-                return lastPrice < previousPrice; // Vente en cas de tendance baissière des prix.
-            }
-        }
-
-        return false;
+        return shouldIBuy ?
+                new Result(Decision.Buy, $"🔍 Conditions d'achat remplies : RSI={rsi:F2}, Prix actuel={currentPrice:F2} > SMA={sma:F2}") :
+                shouldISell ?
+                new Result(Decision.Sell, $"🔺RSI = {rsi:F2} > 80 \n Stochastic = {percentK:F2} > 80 \n 🔴Signal de VENTE immédiat\n Current price: {currentPrice:F2}\n Previous price: {previousPrice:F2}") :
+                new Result(Decision.None, "Aucune condition d'achat ou de vente remplie.");
     }
 }
