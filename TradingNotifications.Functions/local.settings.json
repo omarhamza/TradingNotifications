@@ -1,0 +1,22 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+
+    "CryptoMonitorSettings:CryptoList:0": "BTCEUR",
+    "CryptoMonitorSettings:CryptoList:1": "ETHEUR",
+    "CryptoMonitorSettings:CryptoList:2": "LTCEUR",
+    "CryptoMonitorSettings:CryptoList:3": "BCHEUR",
+    "CryptoMonitorSettings:CryptoList:4": "BNBEUR",
+    "CryptoMonitorSettings:CryptoList:5": "SOLEUR",
+    "CryptoMonitorSettings:CryptoList:6": "XRPEUR",
+    "CryptoMonitorSettings:CryptoList:7": "REPEUR",
+    "CryptoMonitorSettings:SmaPeriod": "14",
+    "CryptoMonitorSettings:RsiPeriod": "14",
+    "CryptoMonitorSettings:RsiBuyThreshold": "30",
+
+    "TelegramBotToken": "",
+    "TelegramChatId": ""
+  }
+}
