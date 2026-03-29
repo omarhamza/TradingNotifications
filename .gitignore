@@ -48,9 +48,19 @@ CodeCoverage/
 
 # MSTest test Results
 [Tt]est[Rr]esult*/
+
+# Azurite local storage emulator
+__azurite_db_*.json
+AzuriteConfig
+__blobstorage__/
 [Bb]uild[Ll]og.*
 
 # NUnit
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# Node modules
+node_modules/
+.next/
+node_modules
